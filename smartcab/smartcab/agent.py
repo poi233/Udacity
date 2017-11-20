@@ -46,10 +46,7 @@ class LearningAgent(Agent):
         else:
             # self.epsilon = self.epsilon - 0.05
             self.epsilon = 0.99 ** self.trail
-            self.alpha = 0.5 * 0.999 ** self.trail
-            # self.epsilon = self.epsilon - 0.002
-            # self.epsilon = math.exp(-0.1 * self.trail)
-            # self.epsilon = math.cos(0.5*self.trail)
+            self.alpha = 0.5 * 0.995 ** self.trail
         return None
 
     def build_state(self):
@@ -66,7 +63,7 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Set 'state' as a tuple of relevant data for the agent        
-        state = (inputs['light'], inputs['left'], inputs['right'], inputs['oncoming'], deadline > 0, waypoint)
+        state = (inputs['light'], inputs['left'], inputs['right'], inputs['oncoming'], waypoint)
 
         return state
 
@@ -78,7 +75,7 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Calculate the maximum Q-value of all actions for a given state
-        maxQ = max(self.Q[state].items(), key=lambda x: x[1])
+        maxQ = max(self.Q[state].items(), key=lambda x: x[1])[1]
 
         return maxQ
 
@@ -102,7 +99,7 @@ class LearningAgent(Agent):
         # Set the agent state and default action
         self.state = state
         self.next_waypoint = self.planner.next_waypoint()
-        action = self.get_maxQ(state)[0]
+        action = random.choice(self.valid_actions)
 
         ########### 
         ## TO DO ##
@@ -110,8 +107,19 @@ class LearningAgent(Agent):
         # When not learning, choose a random action
         # When learning, choose a random action with 'epsilon' probability
         #   Otherwise, choose an action with the highest Q-value for the current state
-        if not self.learning or random.uniform(0, 1) <= self.epsilon:
-            action = random.choice(self.valid_actions)
+        if self.learning:
+            if random.uniform(0, 1) <= self.epsilon:
+                action = action
+            else:
+                maxQ = self.get_maxQ(self.state)
+                actions = []
+                for (k, v) in self.Q[state].items():
+                    if v == maxQ:
+                        if k == state[4]:
+                            return k
+                        else:
+                            actions.append(k)
+                action = random.choice(actions)
         return action
 
     def learn(self, state, action, reward):
@@ -150,7 +158,7 @@ def run():
     #   verbose     - set to True to display additional output from the simulation
     #   num_dummies - discrete number of dummy agents in the environment, default is 100
     #   grid_size   - discrete number of intersections (columns, rows), default is (8, 6)
-    env = Environment(verbose=True)
+    env = Environment()
 
     ##############
     # Create the driving agent
@@ -159,7 +167,7 @@ def run():
     #    * epsilon - continuous value for the exploration factor, default is 1
     #    * alpha   - continuous value for the learning rate, default is 0.5
     agent = env.create_agent(LearningAgent, learning=True, alpha=0.5)
-
+    # agent = env.create_agent(LearningAgent, learning=True)
     ##############
     # Follow the driving agent
     # Flags:
@@ -173,8 +181,8 @@ def run():
     #   display      - set to False to disable the GUI if PyGame is enabled
     #   log_metrics  - set to True to log trial and simulation results to /logs
     #   optimized    - set to True to change the default log file name
-    sim = Simulator(env, update_delay=0.001, log_metrics=True, display=True, optimized=True)
-
+    sim = Simulator(env, update_delay=0.0001, log_metrics=True, display=False, optimized=True)
+    # sim = Simulator(env, update_delay=0.01, log_metrics=True, display=True)
     ##############
     # Run the simulator
     # Flags:
@@ -182,6 +190,7 @@ def run():
     #   n_test     - discrete number of testing trials to perform, default is 0
     # sim.run(tolerance=0.01, n_test=10)
     sim.run(n_test=100, tolerance=1e-5)
+    # sim.run(n_test=10)
 
 if __name__ == '__main__':
     run()
