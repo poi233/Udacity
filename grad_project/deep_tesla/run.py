@@ -13,6 +13,9 @@ import tensorflow as tf
 import utils
 ## Parameters
 import params ## you can modify the content of params.py
+import matplotlib.pyplot as plt
+import tensorflow as tf
+
 
 ## Test epoch
 epoch_ids = [10]
@@ -30,10 +33,19 @@ def img_pre_process(img):
     shape = img.shape
     img = img[int(shape[0]/3):shape[0]-150, 0:shape[1]]
     ## Resize the image
-    img = cv2.resize(img, (params.FLAGS.img_w, params.FLAGS.img_h), interpolation=cv2.INTER_AREA)
+    img = cv2.resize(img, (params.FLAGS.img_h, params.FLAGS.img_w), interpolation=cv2.INTER_AREA)
     ## Return the image sized as a 4D array
-    return np.resize(img, (params.FLAGS.img_w, params.FLAGS.img_h, params.FLAGS.img_c))
+    return np.resize(img, (params.FLAGS.img_h, params.FLAGS.img_w, params.FLAGS.img_c))
 
+def preprocess(img):
+    ratio = params.FLAGS.img_h / params.FLAGS.img_w
+    y1, y2 = 350, 553
+    w = (y2-y1) / ratio
+    padding = int(round((img.shape[1] - w) / 2))
+    img = img[y1:y2, padding:-padding]
+    img = cv2.resize(img, (params.FLAGS.img_w, params.FLAGS.img_h))
+    img = img/255.0
+    return img
 
 ## Process video
 for epoch_id in epoch_ids:
@@ -51,8 +63,9 @@ for epoch_id in epoch_ids:
         ret, img = cap.read()
         assert ret
         ## you can modify here based on your model
-        img = img_pre_process(img)
-        img = img[None,:,:,:]
+        # img = img_pre_process(img)
+        img = preprocess(img)
+        img = img[None, :, :, :]
         deg = float(model.predict(img, batch_size=1))
         machine_steering.append(deg)
 

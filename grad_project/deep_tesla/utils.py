@@ -35,6 +35,7 @@ from keras.layers import Dense, Dropout, Activation, Flatten, Lambda, ELU
 from keras.layers import Convolution2D, MaxPooling2D
 from keras.utils import np_utils
 from keras.optimizers import Adam
+
 ## Parameters
 import params ## you can modify the content of params
 
@@ -398,7 +399,7 @@ def get_model():
     Check if a model already exists
     """
     model_path = join_dir(params.model_dir, 'model.json')
-    param_path = join_dir(params.model_dir, 'model.h5')
+    param_path = join_dir(params.model_dir, 'model.hdf5')
     
     if os.path.exists(model_path):
         ch = input('Model already exists, do you want to reuse? (y/n): ')
@@ -406,7 +407,6 @@ def get_model():
             with open(model_path, 'r') as in_file:
                 json_model = in_file.read()
                 model = model_from_json(json_model)
-
             weights_file = os.path.join(param_path)
             model.load_weights(weights_file)
             print('Model fetched from the disk')
